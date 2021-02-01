@@ -2,11 +2,12 @@ package main
 
 import (
 	"crypto-balancer/src/core/environment" //nolint:gci
-	"fmt"
+	"crypto-balancer/src/feature/binance/signature"
+	"fmt" //nolint:gci
 )
 
 func main() {
 	environment.LoadVariables()
-	fmt.Println(environment.GetBinanceApiKey())
-	fmt.Println(environment.GetBinanceAPiSecretKey())
+	binanceSecretKey := environment.GetBinanceAPiSecretKey()
+	fmt.Println(signature.Generate(binanceSecretKey))
 }
