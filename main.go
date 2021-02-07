@@ -8,6 +8,6 @@ import (
 
 func main() {
 	environment.LoadVariables()
-	binanceSecretKey := environment.GetBinanceAPiSecretKey()
+	binanceSecretKey := environment.BinanceAPiSecretKey()
 	fmt.Println(signature.Generate(binanceSecretKey))
 }

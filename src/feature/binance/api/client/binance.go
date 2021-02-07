@@ -1,10 +1,21 @@
 package client
 
 import (
+	"crypto-balancer/src/core/datetime"
 	"crypto-balancer/src/core/environment"
+	"crypto-balancer/src/core/network"
+	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"time"
+)
+
+const (
+	timestampKey  = "timestamp"
+	signatureKey  = "signature"
+	recvWindowKey = "recvWindow"
 )
 
 type BinanceClient struct {
@@ -19,11 +30,58 @@ type BinanceClient struct {
 
 func NewClient() *BinanceClient {
 	return &BinanceClient{
-		ApiKey:     environment.GetBinanceApiKey(),
-		SecretKey:  environment.GetBinanceAPiSecretKey(),
-		BaseURL:    environment.GetBinanceApiBaseUrl(),
-		UserAgent:  "Crypto-Balancer/golang",
+		ApiKey:     environment.BinanceApiKey(),
+		SecretKey:  environment.BinanceAPiSecretKey(),
+		BaseURL:    environment.BinanceApiBaseUrl(),
+		UserAgent:  environment.UserAgent(),
 		HTTPClient: http.DefaultClient,
-		Logger:     log.New(os.Stderr, "Crypto-Balancer: ", log.LstdFlags),
+		Logger:     log.New(os.Stderr, environment.AppName()+" ", log.LstdFlags),
 	}
+}
+
+type SectionApiKeyType int
+
+const (
+	None SectionApiKeyType = iota
+	APIKey
+	Signed
+)
+
+func (client *BinanceClient) NewHeader(sectionType SectionApiKeyType) http.Header {
+	header := http.Header{}
+
+	if sectionType == APIKey || sectionType == Signed {
+		header.Set("X-MBX-APIKEY", client.ApiKey)
+	}
+
+	return header
+}
+
+func (client *BinanceClient) createURL(endpoint string) string {
+	return fmt.Sprintf("%s%s", client.BaseURL, endpoint)
+}
+
+func (client *BinanceClient) createQueryParams(sectionType SectionApiKeyType) url.Values {
+	query := url.Values{}
+
+	if sectionType == Signed {
+		query.Add(timestampKey, fmt.Sprintf("%v", datetime.Timestamp(time.Now)))
+	}
+
+	return query
+}
+
+func (client *BinanceClient) NewRequest(method network.HttpMethod, endpoint string, sectionType SectionApiKeyType) *network.Request {
+	request := &network.Request{
+		Method:      method,
+		Endpoint:    endpoint,
+		Header:      client.NewHeader(sectionType),
+		QueryValues: client.createQueryParams(sectionType),
+		BodyValues:  url.Values{},
+		Path:        endpoint,
+		Url:         client.createURL(endpoint),
+		BaseURL:     client.BaseURL,
+	}
+
+	return request
 }
