@@ -4,12 +4,12 @@ type AccountEndpointType string
 
 const (
 	Version AccountEndpointType = "v3"
-	account                     = "account"
+	Account                     = "account"
 )
 
 type AccountEndpointParamsType string
 
 const (
-	timestamp AccountEndpointParamsType = "timestamp"
-	signature                           = "signature"
+	Timestamp AccountEndpointParamsType = "timestamp"
+	Signature                           = "signature"
 )
