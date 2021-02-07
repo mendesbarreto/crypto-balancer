@@ -28,7 +28,7 @@ type BinanceClient struct {
 	TimesOffset int64
 }
 
-func NewClient() *BinanceClient {
+func NewBinanceClient() *BinanceClient {
 	return &BinanceClient{
 		ApiKey:     environment.BinanceApiKey(),
 		SecretKey:  environment.BinanceAPiSecretKey(),
@@ -42,15 +42,15 @@ func NewClient() *BinanceClient {
 type SectionApiKeyType int
 
 const (
-	None SectionApiKeyType = iota
-	APIKey
-	Signed
+	SectionNone SectionApiKeyType = iota
+	SectionAPIKey
+	SectionSigned
 )
 
 func (client *BinanceClient) NewHeader(sectionType SectionApiKeyType) http.Header {
 	header := http.Header{}
 
-	if sectionType == APIKey || sectionType == Signed {
+	if sectionType == SectionAPIKey || sectionType == SectionSigned {
 		header.Set("X-MBX-APIKEY", client.ApiKey)
 	}
 
@@ -64,17 +64,16 @@ func (client *BinanceClient) createURL(endpoint string) string {
 func (client *BinanceClient) createQueryParams(sectionType SectionApiKeyType) url.Values {
 	query := url.Values{}
 
-	if sectionType == Signed {
+	if sectionType == SectionSigned {
 		query.Add(timestampKey, fmt.Sprintf("%v", datetime.Timestamp(time.Now)))
 	}
 
 	return query
 }
 
-func (client *BinanceClient) NewRequest(method network.HttpMethod, endpoint string, sectionType SectionApiKeyType) *network.Request {
+func (client *BinanceClient) NewRequest(method string, endpoint string, sectionType SectionApiKeyType) *network.Request {
 	request := &network.Request{
 		Method:      method,
-		Endpoint:    endpoint,
 		Header:      client.NewHeader(sectionType),
 		QueryValues: client.createQueryParams(sectionType),
 		BodyValues:  url.Values{},

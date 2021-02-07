@@ -9,16 +9,8 @@ import (
 
 type HttpMethod string
 
-const (
-	GET    HttpMethod = "GET"
-	POST   HttpMethod = "POST"
-	PATCH  HttpMethod = "PATCH"
-	DELETE HttpMethod = "DELETE"
-)
-
 type Request struct {
-	Method      HttpMethod
-	Endpoint    string
+	Method      string
 	QueryValues url.Values
 	BodyValues  url.Values
 	Header      http.Header
