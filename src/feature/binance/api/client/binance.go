@@ -4,6 +4,7 @@ import (
 	"crypto-balancer/src/core/datetime"
 	"crypto-balancer/src/core/environment"
 	"crypto-balancer/src/core/network"
+	"crypto-balancer/src/feature/binance/signature"
 	"fmt"
 	"log"
 	"net/http"
@@ -73,14 +74,41 @@ func (client *BinanceClient) createQueryParams(sectionType SectionApiKeyType) ur
 
 func (client *BinanceClient) NewRequest(method string, endpoint string, sectionType SectionApiKeyType) *network.Request {
 	request := &network.Request{
-		Method:      method,
-		Header:      client.NewHeader(sectionType),
-		QueryValues: client.createQueryParams(sectionType),
-		BodyValues:  url.Values{},
-		Path:        endpoint,
-		Url:         client.createURL(endpoint),
-		BaseURL:     client.BaseURL,
+		Method:            method,
+		Header:            client.NewHeader(sectionType),
+		QueryValues:       client.createQueryParams(sectionType),
+		BodyValues:        url.Values{},
+		Path:              endpoint,
+		Url:               client.createURL(endpoint),
+		BaseURL:           client.BaseURL,
+		QueryStringMapper: AddSignatureToQueryParams(client.ApiKey, sectionType),
 	}
 
 	return request
+}
+
+func AddSignatureToQueryParams(apiKey string, sectionType SectionApiKeyType) func(value string) string {
+	if sectionType != SectionSigned {
+		return func(value string) string {
+			return value
+		}
+	}
+
+	mac := signature.Generate(apiKey)
+
+	return func(value string) string {
+		if _, err := mac.Write([]byte(value)); err != nil {
+			log.Fatal(err)
+			return value
+		}
+
+		newQueryParams := url.Values{}
+		newQueryParams.Set(signatureKey, fmt.Sprintf("%x", mac.Sum(nil)))
+
+		if value == "" {
+			return newQueryParams.Encode()
+		}
+
+		return fmt.Sprintf("%s&%s", value, newQueryParams.Encode())
+	}
 }

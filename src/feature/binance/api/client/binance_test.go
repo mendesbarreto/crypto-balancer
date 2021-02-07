@@ -5,6 +5,7 @@ import (
 	"crypto-balancer/src/core/network"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"testing"
 )
@@ -52,6 +53,43 @@ func TestNewBinanceClient(test *testing.T) {
 		test.Error("The biance client http should be the same as the http default")
 	}
 
+}
+
+func TestAddSignatureToQueryParams(test *testing.T) {
+	binanceClient := setupBinance()
+	addSignatureToQueryParams := AddSignatureToQueryParams(binanceClient.ApiKey, SectionAPIKey)
+	queryValues := url.Values{}
+
+	queryValues.Set("id", "1234")
+	queryValues.Set("name", "Douglas")
+
+	result := addSignatureToQueryParams(queryValues.Encode())
+	expectedResult := queryValues.Encode()
+
+	if result != expectedResult {
+		test.Error("When the section is SectionAPIKey The result should be the same as query values added as parameter")
+	}
+
+	addSignatureToQueryParams = AddSignatureToQueryParams(binanceClient.ApiKey, SectionNone)
+
+	result = addSignatureToQueryParams(queryValues.Encode())
+	expectedResult = queryValues.Encode()
+
+	if result != expectedResult {
+		test.Error("When the section is SectionNone The result should be the same as query values added as parameter")
+	}
+
+	addSignatureToQueryParams = AddSignatureToQueryParams(binanceClient.ApiKey, SectionSigned)
+	result = addSignatureToQueryParams(queryValues.Encode())
+	expectedResult = "id=1234&name=Douglas&signature=6919eb2b0c6a227be61bd50e43ac810a8257749976dab3a01bae8de987460dd5"
+
+	if len(result) == 0 {
+		test.Error("The result should not empty")
+	}
+
+	if result != expectedResult {
+		test.Error("The result should add signature on params and be the same as the expectedResult string")
+	}
 }
 
 func TestCreateUrl(test *testing.T) {
