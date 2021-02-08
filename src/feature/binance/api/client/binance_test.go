@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -159,7 +160,9 @@ func TestCreateUrl(test *testing.T) {
 		test.Error("When the request section is Signed it should add an api key header")
 	}
 
-	if len(request.Header.Get("X-Mbx-Apikey")) == 0 {
-		test.Error("When the request section is Signed it should add an api key header")
+	queryString := request.QueryString()
+	if strings.Contains(queryString, "timestamp=") &&
+		strings.Contains(queryString, "signature=496f06959bcfff47746396f7bcaf6353662a78dba950762d0c8ee671b0b6bc40") {
+		test.Error("When the request section is Signed it should add timestamp and signature parameters")
 	}
 }
