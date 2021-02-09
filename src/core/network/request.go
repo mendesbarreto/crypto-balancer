@@ -9,6 +9,7 @@ import (
 
 type HttpMethod string
 type QueryStringMapper func(value string) string
+type Params map[string]interface{}
 
 type Request struct {
 	Method            string
@@ -39,6 +40,20 @@ func (request *Request) AddFormParam(key string, value interface{}) *Request {
 
 func (request *Request) SetFormParam(key string, value interface{}) *Request {
 	request.BodyValues.Set(key, fmt.Sprintf("%v", value))
+	return request
+}
+
+func (request *Request) SetFormParams(params Params) *Request {
+	for key, value := range params {
+		request.SetFormParam(key, value)
+	}
+	return request
+}
+
+func (request *Request) SetParams(params Params) *Request {
+	for key, value := range params {
+		request.SetParam(key, value)
+	}
 	return request
 }
 

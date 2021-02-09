@@ -1,6 +1,8 @@
 package client
 
 import (
+	"bytes"
+	"context"
 	"crypto-balancer/src/core/datetime"
 	"crypto-balancer/src/core/environment"
 	"crypto-balancer/src/core/network"
@@ -13,10 +15,17 @@ import (
 	"time"
 )
 
+type ExecuteFunc func(req *http.Request) (*http.Response, error)
+
+type WorkingType string
+
 const (
 	timestampKey  = "timestamp"
 	signatureKey  = "signature"
 	recvWindowKey = "recvWindow"
+
+	WorkingTypeMarkPrice     WorkingType = "MARK_PRICE"
+	WorkingTypeContractPrice WorkingType = "CONTRACT_PRICE"
 )
 
 type BinanceClient struct {
@@ -78,6 +87,7 @@ func (client *BinanceClient) NewRequest(method string, endpoint string, sectionT
 		Header:            client.NewHeader(sectionType),
 		QueryValues:       client.createQueryParams(sectionType),
 		BodyValues:        url.Values{},
+		Body:              &bytes.Buffer{},
 		Path:              endpoint,
 		Url:               client.createURL(endpoint),
 		BaseURL:           client.BaseURL,
@@ -85,6 +95,28 @@ func (client *BinanceClient) NewRequest(method string, endpoint string, sectionT
 	}
 
 	return request
+}
+
+func (client *BinanceClient) log(format string, v ...interface{}) {
+	client.Logger.Printf(format, v...)
+}
+
+//func (client *BinanceClient) CreateOrder(ctx context.Context, request *network.Request) (data []byte, err error) {
+//	fata
+//}
+
+func (client *BinanceClient) Call(ctx context.Context, request *network.Request) (data []byte, err error) {
+	httpRequest, err := http.NewRequest(request.Method, request.FullUrl(), request.Body)
+
+	if err != nil {
+		return []byte{}, err
+	}
+
+	httpRequest = httpRequest.WithContext(ctx)
+	httpRequest.Header = request.Header
+
+	client.log("Starting Request: %#v", httpRequest)
+
 }
 
 func AddSignatureToQueryParams(apiKey string, sectionType SectionApiKeyType) func(value string) string {
