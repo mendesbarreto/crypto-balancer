@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func setupBinance() (binanceClient *BinanceClient) {
@@ -56,33 +57,37 @@ func TestNewBinanceClient(test *testing.T) {
 
 }
 
-func TestAddSignatureToQueryParams(test *testing.T) {
+func TestAddRequiredParams(test *testing.T) {
 	binanceClient := setupBinance()
-	addSignatureToQueryParams := AddSignatureToQueryParams(binanceClient.ApiKey, SectionAPIKey)
-	queryValues := url.Values{}
 
+	nowFunction := func() time.Time {
+		return time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	}
+
+	addSignatureToQueryParams := AddRequiredParams(binanceClient.ApiKey, SectionAPIKey, nowFunction)
+	queryValues := url.Values{}
 	queryValues.Set("id", "1234")
 	queryValues.Set("name", "Douglas")
 
 	result := addSignatureToQueryParams(queryValues.Encode())
-	expectedResult := queryValues.Encode()
+	expectedResult := "id=1234&name=Douglas&timestamp=1577836800000"
 
 	if result != expectedResult {
 		test.Error("When the section is SectionAPIKey The result should be the same as query values added as parameter")
 	}
 
-	addSignatureToQueryParams = AddSignatureToQueryParams(binanceClient.ApiKey, SectionNone)
+	addSignatureToQueryParams = AddRequiredParams(binanceClient.ApiKey, SectionNone, nowFunction)
 
 	result = addSignatureToQueryParams(queryValues.Encode())
-	expectedResult = queryValues.Encode()
+	expectedResult = "id=1234&name=Douglas"
 
 	if result != expectedResult {
 		test.Error("When the section is SectionNone The result should be the same as query values added as parameter")
 	}
 
-	addSignatureToQueryParams = AddSignatureToQueryParams(binanceClient.ApiKey, SectionSigned)
+	addSignatureToQueryParams = AddRequiredParams(binanceClient.ApiKey, SectionSigned, nowFunction)
 	result = addSignatureToQueryParams(queryValues.Encode())
-	expectedResult = "id=1234&name=Douglas&signature=6919eb2b0c6a227be61bd50e43ac810a8257749976dab3a01bae8de987460dd5"
+	expectedResult = "id=1234&name=Douglas&timestamp=1577836800000&signature=d829a0dd4821de0ebe70d12e48bc1e0dd687d5f0af67c795fd0e0abfc9f89f86"
 
 	if len(result) == 0 {
 		test.Error("The result should not empty")
@@ -93,7 +98,7 @@ func TestAddSignatureToQueryParams(test *testing.T) {
 	}
 }
 
-func TestCreateUrl(test *testing.T) {
+func TestNewRequest(test *testing.T) {
 	method := http.MethodGet
 	endpoint := "v2/hello"
 	sectionType := SectionAPIKey

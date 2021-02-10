@@ -1,6 +1,7 @@
 package network
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,42 +24,24 @@ type Request struct {
 	QueryStringMapper QueryStringMapper
 }
 
-func (request *Request) AddParam(key string, value interface{}) *Request {
-	request.QueryValues.Add(key, fmt.Sprintf("%v", value))
+func (request *Request) AddParam(key string, value string) *Request {
+	request.QueryValues.Add(key, value)
 	return request
 }
 
-func (request *Request) SetParam(key string, value interface{}) *Request {
-	request.QueryValues.Set(key, fmt.Sprintf("%v", value))
-	return request
-}
-
-func (request *Request) AddFormParam(key string, value interface{}) *Request {
-	request.BodyValues.Add(key, fmt.Sprintf("%v", value))
-	return request
-}
-
-func (request *Request) SetFormParam(key string, value interface{}) *Request {
-	request.BodyValues.Set(key, fmt.Sprintf("%v", value))
-	return request
-}
-
-func (request *Request) SetFormParams(params Params) *Request {
-	for key, value := range params {
-		request.SetFormParam(key, value)
-	}
+func (request *Request) SetParam(key string, value string) *Request {
+	request.QueryValues.Set(key, value)
 	return request
 }
 
 func (request *Request) SetParams(params Params) *Request {
 	for key, value := range params {
-		request.SetParam(key, value)
+		request.SetParam(key, fmt.Sprintf("%v", value))
 	}
 	return request
 }
 
 func (request *Request) QueryString() string {
-
 	queryString := request.QueryValues.Encode()
 
 	if request.QueryStringMapper != nil {
@@ -68,12 +51,17 @@ func (request *Request) QueryString() string {
 	return queryString
 }
 
-func (request *Request) FullUrl() string {
-	queryString := request.QueryString()
+func (request *Request) ToHttpRequest(ctx context.Context) (httpRequest *http.Request, err error) {
+	httpUrl := request.Url
+	httpRequest, err = http.NewRequest(request.Method, httpUrl, nil)
 
-	if queryString != "" {
-		return fmt.Sprintf("%s?%s", request.Url, request.QueryString())
+	if err != nil {
+		return nil, err
 	}
 
-	return request.Url
+	httpRequest = httpRequest.WithContext(ctx)
+	httpRequest.Header = request.Header
+	httpRequest.URL.RawQuery = request.QueryString()
+
+	return httpRequest, err
 }

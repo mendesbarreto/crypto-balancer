@@ -1,9 +1,9 @@
-package builder
+package client
 
 import (
 	"context"
 	"crypto-balancer/src/core/network"
-	"crypto-balancer/src/feature/binance/api/client"
+	"encoding/json"
 	"net/http"
 )
 
@@ -16,8 +16,9 @@ type OrderStatusType string
 
 // Global enums
 const (
-	SideTypeBuy  SideType = "BUY"
-	SideTypeSell SideType = "SELL"
+	OrderEndpoint string   = "/api/v3/order"
+	SideTypeBuy   SideType = "BUY"
+	SideTypeSell  SideType = "SELL"
 
 	PositionSideTypeBoth  PositionSideType = "BOTH"
 	PositionSideTypeLong  PositionSideType = "LONG"
@@ -48,9 +49,40 @@ const (
 	OrderStatusTypeExpired         OrderStatusType = "EXPIRED"
 )
 
+// CreateOrderResponse define create order response
+type CreateOrderResponse struct {
+	Symbol                  string `json:"symbol"`
+	OrderID                 int64  `json:"orderId"`
+	ClientOrderID           string `json:"clientOrderId"`
+	TransactTime            int64  `json:"transactTime"`
+	Price                   string `json:"price"`
+	OrigQuantity            string `json:"origQty"`
+	ExecutedQuantity        string `json:"executedQty"`
+	CumulativeQuoteQuantity string `json:"cummulativeQuoteQty"`
+	IsIsolated              bool   `json:"isIsolated"` // for isolated margin
+
+	Status      OrderStatusType `json:"status"`
+	TimeInForce TimeInForceType `json:"timeInForce"`
+	Type        OrderType       `json:"type"`
+	Side        SideType        `json:"side"`
+
+	// for order response is set to FULL
+	Fills                 []*Fill `json:"fills"`
+	MarginBuyBorrowAmount string  `json:"marginBuyBorrowAmount"` // for margin
+	MarginBuyBorrowAsset  string  `json:"marginBuyBorrowAsset"`
+}
+
+// Fill may be returned in an array of fills in a CreateOrderResponse.
+type Fill struct {
+	Price           string `json:"price"`
+	Quantity        string `json:"qty"`
+	Commission      string `json:"commission"`
+	CommissionAsset string `json:"commissionAsset"`
+}
+
 // CreateOrderService create order
 type OrderBuilder struct {
-	client           *client.BinanceClient
+	client           *BinanceClient
 	symbol           string
 	side             SideType
 	positionSide     *PositionSideType
@@ -61,7 +93,7 @@ type OrderBuilder struct {
 	price            *string
 	newClientOrderID *string
 	stopPrice        *string
-	workingType      *client.WorkingType
+	workingType      *WorkingType
 	activationPrice  *string
 	callbackRate     *string
 	newOrderRespType NewOrderRespType
@@ -118,7 +150,7 @@ func (builder *OrderBuilder) StopPrice(stopPrice string) *OrderBuilder {
 	return builder
 }
 
-func (builder *OrderBuilder) WorkingType(workingType client.WorkingType) *OrderBuilder {
+func (builder *OrderBuilder) WorkingType(workingType WorkingType) *OrderBuilder {
 	builder.workingType = &workingType
 	return builder
 }
@@ -138,8 +170,12 @@ func (builder *OrderBuilder) NewOrderResponseType(newOrderResponseType NewOrderR
 	return builder
 }
 
+func (builder *OrderBuilder) Validate() *OrderBuilder {
+	return builder
+}
+
 func (builder *OrderBuilder) Build(ctx context.Context, endpoint string) (data []byte, err error) {
-	request := builder.client.NewRequest(http.MethodGet, endpoint, client.SectionSigned)
+	request := builder.client.NewRequest(http.MethodGet, endpoint, SectionSigned)
 
 	parameters := network.Params{
 		"symbol":           builder.symbol,
@@ -182,10 +218,28 @@ func (builder *OrderBuilder) Build(ctx context.Context, endpoint string) (data [
 
 	request.SetParams(parameters)
 
-	data, err = builder.client.Call(ctx, request)
+	data, err = builder.client.Call(ctx, request, SectionSigned)
 
 	if err != nil {
 		return []byte{}, err
 	}
+
 	return data, nil
+}
+
+func (builder *OrderBuilder) Do(ctx context.Context) (response *CreateOrderResponse, err error) {
+	data, err := builder.Build(ctx, OrderEndpoint)
+
+	if err != nil {
+		return nil, err
+	}
+
+	response = new(CreateOrderResponse)
+	err = json.Unmarshal(data, response)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }
