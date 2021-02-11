@@ -1,9 +1,11 @@
 package client
 
 import (
+	"bytes"
 	"crypto-balancer/src/core/environment"
 	"crypto-balancer/src/core/network"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -165,5 +167,50 @@ func TestNewRequest(test *testing.T) {
 	if strings.Contains(queryString, "timestamp=") &&
 		strings.Contains(queryString, "signature=496f06959bcfff47746396f7bcaf6353662a78dba950762d0c8ee671b0b6bc40") {
 		test.Error("When the request section is Signed it should add timestamp and signature parameters")
+	}
+}
+
+func TestHttpResponseHandler(test *testing.T) {
+	response := &http.Response{}
+
+	response.StatusCode = 200
+	response.Body = ioutil.NopCloser(bytes.NewReader([]byte("OK")))
+
+	data, err := HttpResponseHandler(response)
+
+	if err != nil {
+		test.Error("When status code is between 200 and 399 " +
+			"and the response body is a strig should not raise an error")
+	}
+
+	if string(data) != "OK" {
+		test.Error("the content of the body should be OK")
+	}
+
+	response.StatusCode = 400
+	response.Body = ioutil.NopCloser(bytes.NewReader([]byte("{\"code\": 1000, \"msg\": \"bad request\"}")))
+
+	data, err = HttpResponseHandler(response)
+
+	if data != nil {
+		test.Error("When status code is greater than 399 data should be null")
+	}
+
+	if err == nil {
+		test.Error("When status code is greater than 399 data should not be null")
+	}
+
+	if !network.IsAPIError(err) {
+		test.Error("The error should should of type APIError")
+	}
+
+	apiError := err.(*network.APIError)
+
+	if apiError.Message != "bad request" {
+		test.Error("The error should should has the message bad request")
+	}
+
+	if apiError.Code != 1000 {
+		test.Error("The error should should has the code 1000")
 	}
 }

@@ -103,6 +103,8 @@ func (client *BinanceClient) Call(ctx context.Context, request *network.Request,
 		return nil, err
 	}
 
+	crytpoLog.LogDebug("response: %#v", response)
+
 	defer func() {
 		closeError := response.Body.Close()
 		if err == nil && closeError != nil {
@@ -110,16 +112,14 @@ func (client *BinanceClient) Call(ctx context.Context, request *network.Request,
 		}
 	}()
 
+	return HttpResponseHandler(response)
+}
+
+func HttpResponseHandler(response *http.Response) (data []byte, err error) {
+	crytpoLog.LogDebug("status code: %d", response.StatusCode)
+
 	data, err = ioutil.ReadAll(response.Body)
 
-	if err != nil {
-		return nil, err
-	}
-
-	crytpoLog.LogDebug("status code: %d", response.StatusCode)
-	crytpoLog.LogDebug("response: %#v", response)
-
-	//TODO: Migrate this block to a status code handler
 	if response.StatusCode >= 400 {
 		binanceApiError := new(network.APIError)
 		jsonError := json.Unmarshal(data, binanceApiError)
