@@ -175,37 +175,6 @@ func AddRequiredParams(secretKey string, sectionType SectionApiKeyType, now func
 	}
 }
 
-func (client *BinanceClient) QueryString(request *network.Request, sectionType SectionApiKeyType) string {
-	if sectionType != SectionAPIKey && sectionType != SectionSigned {
-		return request.QueryString()
-	}
-
-	queryString := ""
-
-	if queryString = request.QueryString(); queryString != "" {
-		queryString = fmt.Sprintf("%s&", queryString)
-	}
-
-	timestamp := fmt.Sprintf("timestamp=%d", datetime.Timestamp(time.Now))
-
-	signatureString := ""
-
-	queryString = fmt.Sprintf("%s%s", queryString, timestamp)
-
-	if sectionType == SectionSigned {
-		mac := signature.Generate(client.SecretKey)
-
-		if _, err := mac.Write([]byte(queryString)); err != nil {
-			log.Fatal(err)
-		}
-
-		signatureHex := hex.EncodeToString(mac.Sum(nil))
-		signatureString = fmt.Sprintf("&%s=%s", signatureKey, signatureHex)
-	}
-
-	return fmt.Sprintf("%s%s", queryString, signatureString)
-}
-
 func (client *BinanceClient) NewAccountRequestBuilder() *GetAccountBuilder {
 	return &GetAccountBuilder{
 		client: client,
