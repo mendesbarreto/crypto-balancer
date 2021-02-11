@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto-balancer/src/core/datetime"
 	"crypto-balancer/src/core/environment"
+	crytpoLog "crypto-balancer/src/core/log"
 	"crypto-balancer/src/core/network"
 	"crypto-balancer/src/feature/binance/signature"
 	"encoding/hex"
@@ -14,7 +15,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 )
 
@@ -37,7 +37,6 @@ type BinanceClient struct {
 	BaseURL     string
 	UserAgent   string
 	HTTPClient  *http.Client
-	Logger      *log.Logger
 	TimesOffset int64
 }
 
@@ -48,7 +47,6 @@ func NewBinanceClient() *BinanceClient {
 		BaseURL:    environment.BinanceApiBaseUrl(),
 		UserAgent:  environment.UserAgent(),
 		HTTPClient: http.DefaultClient,
-		Logger:     log.New(os.Stderr, "["+environment.AppName()+"]: ", log.LstdFlags|log.Lshortfile),
 	}
 }
 
@@ -92,10 +90,6 @@ func (client *BinanceClient) NewRequest(method string, endpoint string, sectionT
 	return request
 }
 
-func (client *BinanceClient) log(format string, v ...interface{}) {
-	client.Logger.Printf(format, v...)
-}
-
 func (client *BinanceClient) Call(ctx context.Context, request *network.Request, sectionType SectionApiKeyType) (data []byte, err error) {
 	httpRequest, err := request.ToHttpRequest(ctx)
 
@@ -122,8 +116,8 @@ func (client *BinanceClient) Call(ctx context.Context, request *network.Request,
 		return nil, err
 	}
 
-	client.log("status code: %d", response.StatusCode)
-	client.log("response: %#v", response)
+	crytpoLog.LogDebug("status code: %d", response.StatusCode)
+	crytpoLog.LogDebug("response: %#v", response)
 
 	//TODO: Migrate this block to a status code handler
 	if response.StatusCode >= 400 {
@@ -131,7 +125,7 @@ func (client *BinanceClient) Call(ctx context.Context, request *network.Request,
 		jsonError := json.Unmarshal(data, binanceApiError)
 
 		if jsonError != nil {
-			client.log("failed to unmarshal json: %s", jsonError)
+			crytpoLog.LogError("failed to unmarshal json: %s", jsonError)
 		}
 
 		return nil, binanceApiError

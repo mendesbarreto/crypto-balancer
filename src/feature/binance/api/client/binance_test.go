@@ -47,10 +47,6 @@ func TestNewBinanceClient(test *testing.T) {
 		test.Error("The UserAgent created by method is not the same as the environment")
 	}
 
-	if binanceClient.Logger == nil {
-		test.Error("The the logger should not be null")
-	}
-
 	if binanceClient.HTTPClient != http.DefaultClient {
 		test.Error("The biance client http should be the same as the http default")
 	}
