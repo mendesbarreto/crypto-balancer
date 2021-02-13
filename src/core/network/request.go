@@ -59,7 +59,7 @@ func (request *Request) ToHttpRequest(ctx context.Context) (httpRequest *http.Re
 		return nil, err
 	}
 
-	httpRequest = httpRequest.WithContext(ctx)
+	//httpRequest = httpRequest.WithContext(ctx)
 	httpRequest.Header = request.Header
 	httpRequest.URL.RawQuery = request.QueryString()
 

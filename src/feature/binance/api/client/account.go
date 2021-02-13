@@ -28,11 +28,11 @@ type Balance struct {
 }
 
 // GetAccountService get account info
-type GetAccountBuilder struct {
+type GetAccountGateway struct {
 	client *BinanceClient
 }
 
-func (builder *GetAccountBuilder) Do(ctx context.Context) (res *Account, err error) {
+func (builder *GetAccountGateway) Do(ctx context.Context) (res *Account, err error) {
 	request := builder.client.NewRequest(http.MethodGet, GetAccountEndpoint, SectionSigned)
 
 	data, err := builder.client.Call(ctx, request, SectionSigned)
@@ -42,6 +42,7 @@ func (builder *GetAccountBuilder) Do(ctx context.Context) (res *Account, err err
 	}
 
 	res = new(Account)
+
 	err = json.Unmarshal(data, res)
 
 	if err != nil {

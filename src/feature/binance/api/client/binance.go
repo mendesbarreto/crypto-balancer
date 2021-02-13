@@ -40,6 +40,16 @@ type BinanceClient struct {
 	TimesOffset int64
 }
 
+func NewBinanceClientWithHttp(client *http.Client) *BinanceClient {
+	return &BinanceClient{
+		ApiKey:     environment.BinanceApiKey(),
+		SecretKey:  environment.BinanceAPiSecretKey(),
+		BaseURL:    environment.BinanceApiBaseUrl(),
+		UserAgent:  environment.UserAgent(),
+		HTTPClient: client,
+	}
+}
+
 func NewBinanceClient() *BinanceClient {
 	return &BinanceClient{
 		ApiKey:     environment.BinanceApiKey(),
@@ -169,14 +179,14 @@ func AddRequiredParams(secretKey string, sectionType SectionApiKeyType, now func
 	}
 }
 
-func (client *BinanceClient) NewAccountRequestBuilder() *GetAccountBuilder {
-	return &GetAccountBuilder{
+func (client *BinanceClient) NewGetAccountGateway() *GetAccountGateway {
+	return &GetAccountGateway{
 		client: client,
 	}
 }
 
-func (client *BinanceClient) NewOrderRequestBuilder() *OrderBuilder {
-	return &OrderBuilder{
+func (client *BinanceClient) NewCreateOrderGateway() *CreateOrderGateway {
+	return &CreateOrderGateway{
 		client: client,
 	}
 }

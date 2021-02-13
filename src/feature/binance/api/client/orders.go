@@ -81,7 +81,7 @@ type Fill struct {
 }
 
 // CreateOrderService create order
-type OrderBuilder struct {
+type CreateOrderGateway struct {
 	client           *BinanceClient
 	symbol           string
 	side             SideType
@@ -100,135 +100,166 @@ type OrderBuilder struct {
 	closePosition    *bool
 }
 
-func (builder *OrderBuilder) Symbol(symbol string) *OrderBuilder {
-	builder.symbol = symbol
-	return builder
+func (gateway *CreateOrderGateway) Symbol(symbol string) *CreateOrderGateway {
+	gateway.symbol = symbol
+	return gateway
 }
 
-func (builder *OrderBuilder) Side(side SideType) *OrderBuilder {
-	builder.side = side
-	return builder
+func (gateway *CreateOrderGateway) Side(side SideType) *CreateOrderGateway {
+	gateway.side = side
+	return gateway
 }
 
-func (builder *OrderBuilder) PositionSide(positionSide PositionSideType) *OrderBuilder {
-	builder.positionSide = &positionSide
-	return builder
+func (gateway *CreateOrderGateway) PositionSide(positionSide PositionSideType) *CreateOrderGateway {
+	gateway.positionSide = &positionSide
+	return gateway
 }
 
-func (builder *OrderBuilder) Type(orderType OrderType) *OrderBuilder {
-	builder.orderType = orderType
-	return builder
+func (gateway *CreateOrderGateway) Type(orderType OrderType) *CreateOrderGateway {
+	gateway.orderType = orderType
+	return gateway
 }
 
-func (builder *OrderBuilder) TimeInForce(timeInForce TimeInForceType) *OrderBuilder {
-	builder.timeInForce = &timeInForce
-	return builder
+func (gateway *CreateOrderGateway) TimeInForce(timeInForce TimeInForceType) *CreateOrderGateway {
+	gateway.timeInForce = &timeInForce
+	return gateway
 }
 
-func (builder *OrderBuilder) Quantity(quantity string) *OrderBuilder {
-	builder.quantity = quantity
-	return builder
+func (gateway *CreateOrderGateway) Quantity(quantity string) *CreateOrderGateway {
+	gateway.quantity = quantity
+	return gateway
 }
 
-func (builder *OrderBuilder) ReduceOnly(reduceOnly bool) *OrderBuilder {
-	builder.reduceOnly = &reduceOnly
-	return builder
+func (gateway *CreateOrderGateway) ReduceOnly(reduceOnly bool) *CreateOrderGateway {
+	gateway.reduceOnly = &reduceOnly
+	return gateway
 }
 
-func (builder *OrderBuilder) Price(price string) *OrderBuilder {
-	builder.price = &price
-	return builder
+func (gateway *CreateOrderGateway) Price(price string) *CreateOrderGateway {
+	gateway.price = &price
+	return gateway
 }
 
-func (builder *OrderBuilder) NewClientOrderID(newClientOrderID string) *OrderBuilder {
-	builder.newClientOrderID = &newClientOrderID
-	return builder
+func (gateway *CreateOrderGateway) NewClientOrderID(newClientOrderID string) *CreateOrderGateway {
+	gateway.newClientOrderID = &newClientOrderID
+	return gateway
 }
 
-func (builder *OrderBuilder) StopPrice(stopPrice string) *OrderBuilder {
-	builder.stopPrice = &stopPrice
-	return builder
+func (gateway *CreateOrderGateway) StopPrice(stopPrice string) *CreateOrderGateway {
+	gateway.stopPrice = &stopPrice
+	return gateway
 }
 
-func (builder *OrderBuilder) WorkingType(workingType WorkingType) *OrderBuilder {
-	builder.workingType = &workingType
-	return builder
+func (gateway *CreateOrderGateway) WorkingType(workingType WorkingType) *CreateOrderGateway {
+	gateway.workingType = &workingType
+	return gateway
 }
 
-func (builder *OrderBuilder) ActivationPrice(activationPrice string) *OrderBuilder {
-	builder.activationPrice = &activationPrice
-	return builder
+func (gateway *CreateOrderGateway) ActivationPrice(activationPrice string) *CreateOrderGateway {
+	gateway.activationPrice = &activationPrice
+	return gateway
 }
 
-func (builder *OrderBuilder) CallbackRate(callbackRate string) *OrderBuilder {
-	builder.callbackRate = &callbackRate
-	return builder
+func (gateway *CreateOrderGateway) CallbackRate(callbackRate string) *CreateOrderGateway {
+	gateway.callbackRate = &callbackRate
+	return gateway
 }
 
-func (builder *OrderBuilder) NewOrderResponseType(newOrderResponseType NewOrderRespType) *OrderBuilder {
-	builder.newOrderRespType = newOrderResponseType
-	return builder
+func (gateway *CreateOrderGateway) NewOrderResponseType(newOrderResponseType NewOrderRespType) *CreateOrderGateway {
+	gateway.newOrderRespType = newOrderResponseType
+	return gateway
 }
 
-func (builder *OrderBuilder) Validate() *OrderBuilder {
-	return builder
+func (gateway *CreateOrderGateway) ClosePosition(closePosition bool) *CreateOrderGateway {
+	gateway.closePosition = &closePosition
+	return gateway
 }
 
-func (builder *OrderBuilder) Build(ctx context.Context, endpoint string) (data []byte, err error) {
-	request := builder.client.NewRequest(http.MethodGet, endpoint, SectionSigned)
+func (gateway *CreateOrderGateway) Validate() *CreateOrderGateway {
+	return gateway
+}
+
+func (gateway *CreateOrderGateway) GetRequiredOrderParameters() (params network.Params, err error) {
+	if gateway.symbol == "" {
+		return nil, network.APIError{Code: -1, Message: "Missing Order param: symbol"}
+	}
+
+	if gateway.side == "" {
+		return nil, network.APIError{Code: -1, Message: "Missing Order param: side"}
+	}
+
+	if gateway.orderType == "" {
+		return nil, network.APIError{Code: -1, Message: "Missing Order param: orderType"}
+	}
+
+	if gateway.quantity == "" {
+		return nil, network.APIError{Code: -1, Message: "Missing Order param: quantity"}
+	}
+
+	if gateway.newOrderRespType == "" {
+		return nil, network.APIError{Code: -1, Message: "Missing Order param: newOrderRespType"}
+	}
+
+	return network.Params{
+		"symbol":           gateway.symbol,
+		"side":             gateway.side,
+		"type":             gateway.orderType,
+		"quantity":         gateway.quantity,
+		"newOrderRespType": gateway.newOrderRespType,
+	}, nil
+}
+
+func (gateway *CreateOrderGateway) Build(ctx context.Context, endpoint string) *network.Request {
+	request := gateway.client.NewRequest(http.MethodGet, endpoint, SectionSigned)
 
 	parameters := network.Params{
-		"symbol":           builder.symbol,
-		"side":             builder.side,
-		"type":             builder.orderType,
-		"quantity":         builder.quantity,
-		"newOrderRespType": builder.newOrderRespType,
+		"symbol":           gateway.symbol,
+		"side":             gateway.side,
+		"type":             gateway.orderType,
+		"quantity":         gateway.quantity,
+		"newOrderRespType": gateway.newOrderRespType,
 	}
 
-	if builder.positionSide != nil {
-		parameters["positionSide"] = *builder.positionSide
+	if gateway.positionSide != nil {
+		parameters["positionSide"] = *gateway.positionSide
 	}
-	if builder.timeInForce != nil {
-		parameters["timeInForce"] = *builder.timeInForce
+	if gateway.timeInForce != nil {
+		parameters["timeInForce"] = *gateway.timeInForce
 	}
-	if builder.reduceOnly != nil {
-		parameters["reduceOnly"] = *builder.reduceOnly
+	if gateway.reduceOnly != nil {
+		parameters["reduceOnly"] = *gateway.reduceOnly
 	}
-	if builder.price != nil {
-		parameters["price"] = *builder.price
+	if gateway.price != nil {
+		parameters["price"] = *gateway.price
 	}
-	if builder.newClientOrderID != nil {
-		parameters["newClientOrderId"] = *builder.newClientOrderID
+	if gateway.newClientOrderID != nil {
+		parameters["newClientOrderId"] = *gateway.newClientOrderID
 	}
-	if builder.stopPrice != nil {
-		parameters["stopPrice"] = *builder.stopPrice
+	if gateway.stopPrice != nil {
+		parameters["stopPrice"] = *gateway.stopPrice
 	}
-	if builder.workingType != nil {
-		parameters["workingType"] = *builder.workingType
+	if gateway.workingType != nil {
+		parameters["workingType"] = *gateway.workingType
 	}
-	if builder.activationPrice != nil {
-		parameters["activationPrice"] = *builder.activationPrice
+	if gateway.activationPrice != nil {
+		parameters["activationPrice"] = *gateway.activationPrice
 	}
-	if builder.callbackRate != nil {
-		parameters["callbackRate"] = *builder.callbackRate
+	if gateway.callbackRate != nil {
+		parameters["callbackRate"] = *gateway.callbackRate
 	}
-	if builder.closePosition != nil {
-		parameters["closePosition"] = *builder.closePosition
+	if gateway.closePosition != nil {
+		parameters["closePosition"] = *gateway.closePosition
 	}
 
 	request.SetParams(parameters)
 
-	data, err = builder.client.Call(ctx, request, SectionSigned)
-
-	if err != nil {
-		return []byte{}, err
-	}
-
-	return data, nil
+	return request
 }
 
-func (builder *OrderBuilder) Do(ctx context.Context) (response *CreateOrderResponse, err error) {
-	data, err := builder.Build(ctx, OrderEndpoint)
+func (gateway *CreateOrderGateway) Do(ctx context.Context) (response *CreateOrderResponse, err error) {
+	request := gateway.Build(ctx, OrderEndpoint)
+
+	data, err := gateway.client.Call(ctx, request, SectionSigned)
 
 	if err != nil {
 		return nil, err

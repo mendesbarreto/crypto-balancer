@@ -213,4 +213,8 @@ func TestHttpResponseHandler(test *testing.T) {
 	if apiError.Code != 1000 {
 		test.Error("The error should should has the code 1000")
 	}
+
+	if apiError.Error() != "<APIError> code=1000, msg=bad request" {
+		test.Error("The error should should has the code 1000")
+	}
 }

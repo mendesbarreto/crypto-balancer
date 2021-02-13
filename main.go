@@ -13,7 +13,7 @@ import (
 func main() {
 	environment.LoadVariables()
 	binanceClient := client.NewBinanceClient()
-	account, err := binanceClient.NewAccountRequestBuilder().Do(context.Background())
+	account, err := binanceClient.NewGetAccountGateway().Do(context.Background())
 
 	if err != nil {
 		println(err)
