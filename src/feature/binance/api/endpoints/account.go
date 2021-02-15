@@ -4,7 +4,7 @@ type AccountEndpointType string
 
 const (
 	Version AccountEndpointType = "v3"
-	Account                     = "account"
+	Account                     = "asset"
 )
 
 type AccountEndpointParamsType string

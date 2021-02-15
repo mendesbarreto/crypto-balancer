@@ -9,7 +9,7 @@ import (
 
 func setup(addSignatureToQueryParams QueryStringMapper) *Request {
 	return setupWithUrl(
-		"http://localhost:9000/account",
+		"http://localhost:9000/asset",
 		"http://localhost:9000/",
 		addSignatureToQueryParams,
 	)
@@ -21,7 +21,7 @@ func setupWithUrl(urlString string, baseUrl string, addSignatureToQueryParams Qu
 		Header:            http.Header{},
 		QueryValues:       url.Values{},
 		BodyValues:        url.Values{},
-		Path:              "v3/account",
+		Path:              "v3/asset",
 		Url:               urlString,
 		BaseURL:           baseUrl,
 		QueryStringMapper: addSignatureToQueryParams,
@@ -89,7 +89,7 @@ func TestToHttpRequest(test *testing.T) {
 		test.Errorf("The http request should has the host %s", expectedURL)
 	}
 
-	expectedPath := "/account"
+	expectedPath := "/asset"
 
 	if httpRequest.URL.Path != expectedPath {
 		test.Errorf("The http request should has the host %s", expectedURL)

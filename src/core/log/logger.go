@@ -10,10 +10,11 @@ import (
 var logger *log.Logger
 
 const (
-	debugTag      = "[Debug]"
-	errorTag      = "[Error]"
-	fatalErrorTag = "[Fatal]"
-	warningTag    = "[Warning]"
+	debugTag      = "[DEBUG]"
+	infoTag       = "[INFO]"
+	errorTag      = "[ERROR]"
+	fatalErrorTag = "[FATAL]"
+	warningTag    = "[WARNING]"
 )
 
 func init() {
@@ -33,7 +34,7 @@ func LogInfo(format string, v ...interface{}) {
 }
 
 func LogDebug(format string, v ...interface{}) {
-	logInfo(fmt.Sprintf("%s %s", debugTag, format), v)
+	logInfo(fmt.Sprintf("%s %s", infoTag, format), v)
 }
 
 func LogWarning(format string, v ...interface{}) {

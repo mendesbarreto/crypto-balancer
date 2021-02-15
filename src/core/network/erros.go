@@ -9,8 +9,15 @@ type APIError struct {
 	Message string `json:"msg"`
 }
 
+func NewApiError(code int64, message string) *APIError {
+	return &APIError{
+		Code:    code,
+		Message: message,
+	}
+}
+
 func (e APIError) Error() string {
-	return fmt.Sprintf("<APIError> code=%d, msg=%s", e.Code, e.Message)
+	return fmt.Sprintf("[APIError] code=%d, msg=%s", e.Code, e.Message)
 }
 
 func IsAPIError(e error) bool {

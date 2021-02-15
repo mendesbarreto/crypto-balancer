@@ -100,13 +100,14 @@ func (client *BinanceClient) NewRequest(method string, endpoint string, sectionT
 	return request
 }
 
-func (client *BinanceClient) Call(ctx context.Context, request *network.Request, sectionType SectionApiKeyType) (data []byte, err error) {
+func (client *BinanceClient) Call(ctx context.Context, request *network.Request) (data []byte, err error) {
 	httpRequest, err := request.ToHttpRequest(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
+	crytpoLog.LogInfo("Start Request to: %s", httpRequest.URL)
 	response, err := client.HTTPClient.Do(httpRequest)
 
 	if err != nil {
@@ -187,6 +188,12 @@ func (client *BinanceClient) NewGetAccountGateway() *GetAccountGateway {
 
 func (client *BinanceClient) NewCreateOrderGateway() *CreateOrderGateway {
 	return &CreateOrderGateway{
+		client: client,
+	}
+}
+
+func (client *BinanceClient) NewMarketAverageGateway() *MarketTickerGateway {
+	return &MarketTickerGateway{
 		client: client,
 	}
 }

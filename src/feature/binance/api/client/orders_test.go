@@ -1,7 +1,6 @@
 package client
 
 import (
-	"context"
 	"crypto-balancer/src/core/environment"
 	"crypto-balancer/src/core/network"
 	"fmt"
@@ -135,7 +134,7 @@ func TestQuantity(test *testing.T) {
 
 	value := "100"
 	createOrderGateway.Quantity(value)
-	if createOrderGateway.quantity != value {
+	if *createOrderGateway.quantity != value {
 		test.Errorf("The value should the the same as mtehod parameter %s", value)
 	}
 }
@@ -268,7 +267,7 @@ func TestBuild(test *testing.T) {
 		ActivationPrice("100").
 		CallbackRate("3.4").
 		ClosePosition(false).
-		Build(context.Background(), OrderEndpoint)
+		Build(OrderEndpoint)
 
 	if request == nil {
 		test.Errorf("The requst object should not be nil")
@@ -320,7 +319,7 @@ func TestGetRequiredOrderParameters(test *testing.T) {
 		test.Errorf("The params object should not be nil")
 	}
 
-	if len(params) != 5 {
+	if len(params) != 4 {
 		test.Errorf("The param object should has 5 keys")
 	}
 
@@ -333,10 +332,10 @@ func TestGetRequiredOrderParameters(test *testing.T) {
 	validateErrorMessage := func(err error, message string) {
 		if err == nil && !network.IsAPIError(err) {
 			test.Errorf("Error should not be nil or not be the type of APIError")
-		}
-
-		if err.(network.APIError).Message != message {
-			test.Errorf("Error message should contains: %s", message)
+		} else {
+			if err.(network.APIError).Message != message {
+				test.Errorf("Error message should contains: %s", message)
+			}
 		}
 	}
 
@@ -383,17 +382,6 @@ func TestGetRequiredOrderParameters(test *testing.T) {
 
 	params, err = gateway.GetRequiredOrderParameters()
 	validateErrorMessage(err, "Missing Order param: quantity")
-
-	gateway = setupCreateOrder()
-	gateway.
-		Symbol("BTC").
-		Side(SideTypeSell).
-		Type(OrderTypeMarket).
-		PositionSide(PositionSideTypeLong).
-		Quantity("100")
-
-	params, err = gateway.GetRequiredOrderParameters()
-	validateErrorMessage(err, "Missing Order param: newOrderRespType")
 }
 
 func TestCreateOrderDo(test *testing.T) {

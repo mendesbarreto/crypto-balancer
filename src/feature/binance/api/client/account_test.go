@@ -67,7 +67,7 @@ func TestDo(test *testing.T) {
 	responseJsonString = "{\"balance\": 100"
 
 	gock.New("https://test.api.binance.com").
-		Get("/api/v3/account").
+		Get("/api/v3/asset").
 		Reply(200).
 		JSON(responseJsonString)
 
