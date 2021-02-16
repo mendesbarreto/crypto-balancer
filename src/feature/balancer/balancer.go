@@ -2,9 +2,10 @@ package balancer
 
 import (
 	"context"
-	"crypto-balancer/src/core/log"
 	"crypto-balancer/src/feature/asset"
 	"crypto-balancer/src/feature/binance/api/client"
+	log "github.com/sirupsen/logrus"
+	"math"
 )
 
 const (
@@ -12,9 +13,14 @@ const (
 )
 
 type AssetBalancer struct {
-	Symbol string
+	Symbol     string
+	PairSymbol string
 	// Between 0 and 1
 	Weight float64
+}
+
+func (asset *AssetBalancer) BasePairSymbol() string {
+	return asset.Symbol + asset.PairSymbol
 }
 
 type UsdAssetWrapper struct {
@@ -28,18 +34,25 @@ func (wrapper *UsdAssetWrapper) Ratio(total float64) float64 {
 	return wrapper.totalUsdPrice / total
 }
 
-func newUsdAssetWrapper(
+func newBaseUsdAssetWrapper(
 	account *client.Account,
 	assetBalancer AssetBalancer,
-	pairSymbol string,
 ) (*UsdAssetWrapper, error) {
-	baseAssetAmount, err := asset.GetAmount(account.Balances, assetBalancer.Symbol)
+	price, err := asset.GetPrice(assetBalancer.BasePairSymbol())
 
 	if err != nil {
 		return nil, err
 	}
 
-	baseAssetUsdPrice, err := asset.GetPrice(pairSymbol)
+	return newUsdAssetWrapper(account, assetBalancer, price)
+}
+
+func newUsdAssetWrapper(
+	account *client.Account,
+	assetBalancer AssetBalancer,
+	price float64,
+) (*UsdAssetWrapper, error) {
+	baseAssetAmount, err := asset.GetAmount(account.Balances, assetBalancer.Symbol)
 
 	if err != nil {
 		return nil, err
@@ -48,8 +61,8 @@ func newUsdAssetWrapper(
 	return &UsdAssetWrapper{
 		asset:           assetBalancer,
 		assetAmount:     baseAssetAmount,
-		usdPricePerUnit: baseAssetUsdPrice,
-		totalUsdPrice:   baseAssetAmount * baseAssetUsdPrice,
+		usdPricePerUnit: price,
+		totalUsdPrice:   baseAssetAmount * price,
 	}, nil
 }
 
@@ -60,13 +73,13 @@ func BalanceBetweenTwoAssets(account *client.Account, baseAsset AssetBalancer, s
 
 	pairSymbol := GetPairSymbol(baseAsset, subAsset)
 
-	baseAssetWrapper, err := newUsdAssetWrapper(account, baseAsset, pairSymbol)
+	baseAssetWrapper, err := newBaseUsdAssetWrapper(account, baseAsset)
 
 	if err != nil {
 		return err
 	}
 
-	subAssetWrapper, err := newUsdAssetWrapper(account, subAsset, pairSymbol)
+	subAssetWrapper, err := newUsdAssetWrapper(account, subAsset, 1)
 
 	if err != nil {
 		return err
@@ -74,48 +87,56 @@ func BalanceBetweenTwoAssets(account *client.Account, baseAsset AssetBalancer, s
 
 	if ShouldBuy(baseAssetWrapper, subAssetWrapper) {
 		amountToBuy := AmountToBuy(baseAssetWrapper, subAssetWrapper)
-		Log("BUY", baseAssetWrapper, subAssetWrapper, pairSymbol, amountToBuy)
+		Log("BUY", baseAssetWrapper, subAssetWrapper, amountToBuy)
 		err = Buy(amountToBuy, pairSymbol)
+	} else {
+		log.Info("The Balancer will not BUY anything")
 	}
 
-	if err != nil && ShouldSell(baseAssetWrapper, subAssetWrapper) {
-		amountToSell := AmountToBuy(baseAssetWrapper, subAssetWrapper)
-		Log("SELL", baseAssetWrapper, subAssetWrapper, pairSymbol, amountToSell)
+	if err == nil && ShouldSell(baseAssetWrapper, subAssetWrapper) {
+		amountToSell := AmountToSell(baseAssetWrapper, subAssetWrapper)
+		Log("SELL", baseAssetWrapper, subAssetWrapper, amountToSell)
 		err = Sell(
 			amountToSell,
 			pairSymbol,
 		)
+	} else {
+		log.Info("The Balancer will not SELL anything")
 	}
 
 	return err
 }
 
 func Log(
-	transaction string,
+	transactionType string,
 	baseWrapper *UsdAssetWrapper,
 	subWrapper *UsdAssetWrapper,
-	pair string,
 	transactionAmount float64,
 ) {
-	log.LogInfo("---------------|%s|---------------------", transaction)
-	log.LogInfo("-----------| PAIR:%s |------------------", pair)
-	log.LogInfo("----------------------------------------")
-	log.LogInfo(
-		"BaseAsset: %#v | price: %#v | total: %#v | ratio:%#v |",
-		baseWrapper.asset.Symbol,
-		baseWrapper.usdPricePerUnit,
-		baseWrapper.totalUsdPrice,
-		baseWrapper.asset.Weight,
-	)
-	log.LogInfo(
-		"SubAsset: %#v | price: %f | total: %f | ratio:%f |",
-		subWrapper.asset.Symbol,
-		subWrapper.usdPricePerUnit,
-		subWrapper.totalUsdPrice,
-		baseWrapper.asset.Weight,
-	)
-	log.LogInfo("Amount: %f", transactionAmount)
-	log.LogInfo("--------------------------------------------")
+	log.Infof("----------------------------------------")
+	log.Infof("-----------| TRANSACTION |--------------")
+	log.Infof("----------------------------------------")
+	log.WithFields(log.Fields{
+		"Asset":      baseWrapper.asset.Symbol,
+		"Price":      baseWrapper.usdPricePerUnit,
+		"Total":      baseWrapper.totalUsdPrice,
+		"Weight":     baseWrapper.asset.Weight,
+		"PairSymbol": baseWrapper.asset.PairSymbol,
+	}).Info("BASE")
+
+	log.WithFields(log.Fields{
+		"Asset":      subWrapper.asset.Symbol,
+		"Weight":     subWrapper.asset.Weight,
+		"PairSymbol": subWrapper.asset.PairSymbol,
+		"Total":      subWrapper.totalUsdPrice,
+		"Price":      subWrapper.usdPricePerUnit,
+	}).Info("SUB")
+
+	log.Infof("Total: %f", subWrapper.totalUsdPrice+baseWrapper.totalUsdPrice)
+	log.Infof("%s: %f", baseWrapper.asset.Symbol, baseWrapper.totalUsdPrice)
+	log.Infof("%s: %f", subWrapper.asset.Symbol, subWrapper.totalUsdPrice)
+	log.Infof("Amount in USD of %s to %s: %f", baseWrapper.asset.Symbol, transactionType, transactionAmount)
+	log.Infof("-----------| - |--------------")
 }
 
 func GetPairSymbol(baseAsset AssetBalancer, subAsset AssetBalancer) string {
@@ -140,9 +161,8 @@ func Sell(amount float64, pairSymbol string) error {
 		NewCreateOrderGateway().
 		Symbol(pairSymbol).
 		Type(client.OrderTypeMarket).
-		Side(client.SideTypeBuy).
+		Side(client.SideTypeSell).
 		QuoteOrderQty(amount).
-		Validate().
 		Do(context.Background())
 
 	return err
@@ -167,7 +187,7 @@ func AmountToSell(wrapper *UsdAssetWrapper, subWrapper *UsdAssetWrapper) float64
 		return 0
 	}
 
-	return sellAmount
+	return math.Abs(sellAmount)
 }
 
 func ShouldBuy(baseWrapper *UsdAssetWrapper, subWrapper *UsdAssetWrapper) bool {

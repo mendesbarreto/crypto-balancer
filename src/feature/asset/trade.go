@@ -6,6 +6,14 @@ import (
 	"fmt"
 )
 
+const (
+	USDTSymbol    = "USDT"
+	BTCSymbol     = "BTC"
+	ETHSymbol     = "ETH"
+	DOTSymbol     = "DOT"
+	OneInchSymbol = "1INCH"
+)
+
 func CanTrade(account *client.Account, assets []string) error {
 	for _, asset := range assets {
 		amount, err := GetAmount(account.Balances, asset)

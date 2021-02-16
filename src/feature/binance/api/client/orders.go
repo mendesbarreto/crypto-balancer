@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto-balancer/src/core/network"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -89,8 +88,8 @@ type CreateOrderGateway struct {
 	positionSide     *PositionSideType
 	orderType        OrderType
 	timeInForce      *TimeInForceType
-	quantity         *string
-	quoteOrderQty    *string
+	quantity         *float64
+	quoteOrderQty    *float64
 	reduceOnly       *bool
 	price            *string
 	newClientOrderID *string
@@ -98,7 +97,7 @@ type CreateOrderGateway struct {
 	workingType      *WorkingType
 	activationPrice  *string
 	callbackRate     *string
-	newOrderRespType NewOrderRespType
+	newOrderRespType *NewOrderRespType
 	closePosition    *bool
 }
 
@@ -127,14 +126,13 @@ func (gateway *CreateOrderGateway) TimeInForce(timeInForce TimeInForceType) *Cre
 	return gateway
 }
 
-func (gateway *CreateOrderGateway) Quantity(quantity string) *CreateOrderGateway {
+func (gateway *CreateOrderGateway) Quantity(quantity float64) *CreateOrderGateway {
 	gateway.quantity = &quantity
 	return gateway
 }
 
 func (gateway *CreateOrderGateway) QuoteOrderQty(quoteOrderQty float64) *CreateOrderGateway {
-	formattedQuoteOrderQty := fmt.Sprintf("%f", quoteOrderQty)
-	gateway.quoteOrderQty = &formattedQuoteOrderQty
+	gateway.quoteOrderQty = &quoteOrderQty
 	return gateway
 }
 
@@ -174,7 +172,7 @@ func (gateway *CreateOrderGateway) CallbackRate(callbackRate string) *CreateOrde
 }
 
 func (gateway *CreateOrderGateway) NewOrderResponseType(newOrderResponseType NewOrderRespType) *CreateOrderGateway {
-	gateway.newOrderRespType = newOrderResponseType
+	gateway.newOrderRespType = &newOrderResponseType
 	return gateway
 }
 
@@ -217,15 +215,13 @@ func (gateway *CreateOrderGateway) GetRequiredOrderParameters() (params network.
 	return requiredParams, nil
 }
 
-func (gateway *CreateOrderGateway) Build(endpoint string) *network.Request {
-	request := gateway.client.NewRequest(http.MethodGet, endpoint, SectionSigned)
+func (gateway *CreateOrderGateway) Build(endpoint string) (*network.Request, error) {
+	request := gateway.client.NewRequest(http.MethodPost, endpoint, SectionSigned)
 
-	parameters := network.Params{
-		"symbol":           gateway.symbol,
-		"side":             gateway.side,
-		"type":             gateway.orderType,
-		"quantity":         gateway.quantity,
-		"newOrderRespType": gateway.newOrderRespType,
+	parameters, err := gateway.GetRequiredOrderParameters()
+
+	if err != nil {
+		return nil, err
 	}
 
 	if gateway.positionSide != nil {
@@ -258,17 +254,21 @@ func (gateway *CreateOrderGateway) Build(endpoint string) *network.Request {
 	if gateway.closePosition != nil {
 		parameters["closePosition"] = *gateway.closePosition
 	}
-	if &gateway.newOrderRespType != nil {
+	if gateway.newOrderRespType != nil {
 		parameters["newOrderRespType"] = gateway.newOrderRespType
 	}
 
 	request.SetParams(parameters)
 
-	return request
+	return request, nil
 }
 
 func (gateway *CreateOrderGateway) Do(ctx context.Context) (response *CreateOrderResponse, err error) {
-	request := gateway.Build(OrderEndpoint)
+	request, err := gateway.Build(OrderEndpoint)
+
+	if err != nil {
+		return nil, err
+	}
 
 	data, err := gateway.client.Call(ctx, request)
 

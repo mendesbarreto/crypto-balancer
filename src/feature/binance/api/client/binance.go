@@ -5,14 +5,13 @@ import (
 	"context"
 	"crypto-balancer/src/core/datetime"
 	"crypto-balancer/src/core/environment"
-	crytpoLog "crypto-balancer/src/core/log"
 	"crypto-balancer/src/core/network"
 	"crypto-balancer/src/feature/binance/signature"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -107,14 +106,14 @@ func (client *BinanceClient) Call(ctx context.Context, request *network.Request)
 		return nil, err
 	}
 
-	crytpoLog.LogInfo("Start Request to: %s", httpRequest.URL)
+	log.Infof("Start Request to: %s", httpRequest.URL)
 	response, err := client.HTTPClient.Do(httpRequest)
 
 	if err != nil {
 		return nil, err
 	}
 
-	crytpoLog.LogDebug("response: %#v", response)
+	log.Info(response)
 
 	defer func() {
 		closeError := response.Body.Close()
@@ -127,7 +126,7 @@ func (client *BinanceClient) Call(ctx context.Context, request *network.Request)
 }
 
 func HttpResponseHandler(response *http.Response) (data []byte, err error) {
-	crytpoLog.LogDebug("status code: %d", response.StatusCode)
+	log.Infof("status code: %d", response.StatusCode)
 
 	data, err = ioutil.ReadAll(response.Body)
 
@@ -136,7 +135,7 @@ func HttpResponseHandler(response *http.Response) (data []byte, err error) {
 		jsonError := json.Unmarshal(data, binanceApiError)
 
 		if jsonError != nil {
-			crytpoLog.LogError("failed to unmarshal json: %s", jsonError)
+			log.Error(jsonError)
 		}
 
 		return nil, binanceApiError
