@@ -11,11 +11,12 @@ jobs:
     - run: go mod download && go build
     - run: echo ${{ github.event.repository.name }}
     - run: echo "${{github.workspace}}/c.out"
+    - run: go test -v ./... -coverprofile c.out && cat c.out
     - uses: paambaati/codeclimate-action@v2.7.5
       env:
         CC_TEST_REPORTER_ID: db6b1a22f55faced27e0fc546607ee9c478b0e93f54062114e02ee89a9939a2e
       with:
         prefix: ${{ github.event.repository.name }}
-        coverageLocations:
-          "${{github.workspace}}/c.out"
         coverageCommand: go test -v ./... -coverprofile c.out
+        coverageLocations:
+          "${{github.workspace}}/c.out:gcov"
