@@ -22,4 +22,12 @@ jobs:
       run: go build -v ./...
 
     - name: Test
-      run: go test -v ./...
+      run: go test -v -coverprofile c.out ./...
+    - name: Code Climate Coverage Action
+    # You may pin to the exact commit or the version.
+      uses: paambaati/codeclimate-action@v2.7.5
+      env:
+        CC_TEST_REPORTER_ID: db6b1a22f55faced27e0fc546607ee9c478b0e93f54062114e02ee89a9939a2e
+      with:
+        coverageCommand: npm run coverage
+        debug: true
