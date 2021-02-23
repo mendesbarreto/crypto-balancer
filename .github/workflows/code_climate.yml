@@ -1,0 +1,17 @@
+name: Coverage with CodeClimate
+on: [push, pull_request]
+jobs:
+  codeclimate-report:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v2
+      with:
+        go-version: '^1.15.0'
+    - run: go mod download && go build
+    - uses: paambaati/codeclimate-action@v2.7.5
+      env:
+        CC_TEST_REPORTER_ID: db6b1a22f55faced27e0fc546607ee9c478b0e93f54062114e02ee89a9939a2e
+      with:
+        coverageCommand: go test ./... -coverprofile c.out
+        prefix: github.com/mendesbarreto/crypto-balancer
