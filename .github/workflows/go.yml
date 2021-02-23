@@ -28,6 +28,3 @@ jobs:
       uses: paambaati/codeclimate-action@v2.7.5
       env:
         CC_TEST_REPORTER_ID: db6b1a22f55faced27e0fc546607ee9c478b0e93f54062114e02ee89a9939a2e
-      with:
-        coverageCommand: npm run coverage
-        debug: true
