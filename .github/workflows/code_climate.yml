@@ -18,4 +18,4 @@ jobs:
         prefix: ${{ github.event.repository.name }}
         coverageLocations:
           "${{github.workspace}}/c.out"
-        coverageCommand: go test ./... -coverprofile c.out
+        coverageCommand: go test -v ./... -coverprofile c.out
