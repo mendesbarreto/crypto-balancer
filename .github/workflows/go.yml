@@ -9,13 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      BINANCE_API_BASE_URL: https://test.api.binance.com
-      COINGECKO_API_BASE_URL: https://api.coingecko.com/api/v3
-      BINANCE_API_KEY: TESTAPIKEYABC123
-      BINANCE_API_SECRET_KEY: TESTSECRETEAPIKEYAbc1234
-      APP_NAME: Crypto-balancer
-      PROGRAMMING_LANGUAGE: golang
       
     steps:
     - uses: actions/checkout@v2
