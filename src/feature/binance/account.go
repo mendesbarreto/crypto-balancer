@@ -1,4 +1,4 @@
-package client
+package binance
 
 import (
 	"context"
@@ -29,7 +29,7 @@ type AccountBalance struct {
 
 // GetAccountService get asset info
 type GetAccountGateway struct {
-	client *BinanceClient
+	client *Client
 }
 
 func (gateway *GetAccountGateway) Do(ctx context.Context) (res *Account, err error) {

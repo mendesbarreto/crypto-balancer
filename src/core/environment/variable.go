@@ -5,11 +5,14 @@ import (
 	"os"
 )
 
-const AppNameKey = "APP_NAME"
-const ProgrammingLanguageKey = "PROGRAMMING_LANGUAGE"
-const BinanceApiKeyStringKey = "BINANCE_API_KEY"
-const BinanceApiSecretKeyStringKey = "BINANCE_API_SECRET_KEY" //nolint:gosec
-const BinanceApiBaseUrlStringKey = "BINANCE_API_BASE_URL"
+const (
+	AppNameKey                   = "APP_NAME"
+	ProgrammingLanguageKey       = "PROGRAMMING_LANGUAGE"
+	BinanceApiKeyStringKey       = "BINANCE_API_KEY"
+	BinanceApiSecretKeyStringKey = "BINANCE_API_SECRET_KEY" //nolint:gosec
+	BinanceApiBaseUrlStringKey   = "BINANCE_API_BASE_URL"
+	CoinGeckoApiBaseUrlKey       = "COINGECKO_API_BASE_URL"
+)
 
 func BinanceApiKey() string {
 	return os.Getenv(BinanceApiKeyStringKey)
@@ -21,6 +24,10 @@ func BinanceAPiSecretKey() string {
 
 func BinanceApiBaseUrl() string {
 	return os.Getenv(BinanceApiBaseUrlStringKey)
+}
+
+func CoinGeckoApiBaseUrl() string {
+	return os.Getenv(CoinGeckoApiBaseUrlKey)
 }
 
 func AppName() string {

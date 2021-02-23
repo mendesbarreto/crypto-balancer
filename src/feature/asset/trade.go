@@ -2,7 +2,7 @@ package asset
 
 import (
 	"crypto-balancer/src/core/network"
-	"crypto-balancer/src/feature/binance/api/client"
+	"crypto-balancer/src/feature/binance"
 	"fmt"
 )
 
@@ -14,7 +14,7 @@ const (
 	OneInchSymbol = "1INCH"
 )
 
-func CanTrade(account *client.Account, assets []string) error {
+func CanTrade(account *binance.Account, assets []string) error {
 	for _, asset := range assets {
 		amount, err := GetAmount(account.Balances, asset)
 

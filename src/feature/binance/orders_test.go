@@ -1,4 +1,4 @@
-package client
+package binance
 
 import (
 	"crypto-balancer/src/core/environment"
@@ -132,10 +132,10 @@ func TestTimeInForce(test *testing.T) {
 func TestQuantity(test *testing.T) {
 	createOrderGateway := setupCreateOrder()
 
-	value := "100"
+	value := 100.0
 	createOrderGateway.Quantity(value)
 	if *createOrderGateway.quantity != value {
-		test.Errorf("The value should the the same as mtehod parameter %s", value)
+		test.Errorf("The value should the the same as mtehod parameter %f", value)
 	}
 }
 
@@ -233,17 +233,17 @@ func TestNewOrderResponseType(test *testing.T) {
 	createOrderGateway := setupCreateOrder()
 
 	createOrderGateway.NewOrderResponseType(NewOrderRespTypeACK)
-	if createOrderGateway.newOrderRespType != NewOrderRespTypeACK {
+	if *createOrderGateway.newOrderRespType != NewOrderRespTypeACK {
 		test.Errorf("The value should the the same as mtehod parameter %s", NewOrderRespTypeACK)
 	}
 
 	createOrderGateway.NewOrderResponseType(NewOrderRespTypeRESULT)
-	if createOrderGateway.newOrderRespType != NewOrderRespTypeRESULT {
+	if *createOrderGateway.newOrderRespType != NewOrderRespTypeRESULT {
 		test.Errorf("The value should the the same as mtehod parameter %s", NewOrderRespTypeRESULT)
 	}
 
 	createOrderGateway.NewOrderResponseType(NewOrderRespTypeFULL)
-	if createOrderGateway.newOrderRespType != NewOrderRespTypeFULL {
+	if *createOrderGateway.newOrderRespType != NewOrderRespTypeFULL {
 		test.Errorf("The value should the the same as mtehod parameter %s", NewOrderRespTypeFULL)
 	}
 }
@@ -251,12 +251,12 @@ func TestNewOrderResponseType(test *testing.T) {
 func TestBuild(test *testing.T) {
 	createOrderGateway := setupCreateOrder()
 
-	request := createOrderGateway.
+	request, _ := createOrderGateway.
 		Symbol("BTC").
 		Side(SideTypeSell).
 		Type(OrderTypeMarket).
 		PositionSide(PositionSideTypeLong).
-		Quantity("100").
+		Quantity(100).
 		NewOrderResponseType(NewOrderRespTypeFULL).
 		TimeInForce(TimeInForceTypeFOK).
 		ReduceOnly(true).
@@ -306,7 +306,7 @@ func TestGetRequiredOrderParameters(test *testing.T) {
 		Symbol("BTC").
 		Side(SideTypeSell).
 		Type(OrderTypeMarket).
-		Quantity("100").
+		Quantity(100).
 		NewOrderResponseType(NewOrderRespTypeFULL)
 
 	params, err := gateway.GetRequiredOrderParameters()
@@ -344,7 +344,7 @@ func TestGetRequiredOrderParameters(test *testing.T) {
 		Side(SideTypeSell).
 		Type(OrderTypeMarket).
 		PositionSide(PositionSideTypeLong).
-		Quantity("100").
+		Quantity(100).
 		NewOrderResponseType(NewOrderRespTypeFULL)
 
 	params, err = gateway.GetRequiredOrderParameters()
@@ -355,7 +355,7 @@ func TestGetRequiredOrderParameters(test *testing.T) {
 	gateway.
 		Symbol("BTC").
 		Type(OrderTypeMarket).
-		Quantity("100").
+		Quantity(100).
 		NewOrderResponseType(NewOrderRespTypeFULL)
 
 	params, err = gateway.GetRequiredOrderParameters()
@@ -366,7 +366,7 @@ func TestGetRequiredOrderParameters(test *testing.T) {
 	gateway.
 		Symbol("BTC").
 		Side(SideTypeSell).
-		Quantity("100").
+		Quantity(100).
 		NewOrderResponseType(NewOrderRespTypeFULL)
 
 	params, err = gateway.GetRequiredOrderParameters()

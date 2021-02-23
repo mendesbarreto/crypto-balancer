@@ -3,13 +3,14 @@ package balancer
 import (
 	"context"
 	"crypto-balancer/src/feature/asset"
-	"crypto-balancer/src/feature/binance/api/client"
+	"crypto-balancer/src/feature/binance"
 	log "github.com/sirupsen/logrus"
 	"math"
 )
 
 const (
-	ada = "ADA"
+	BuyTriggerValue  = 0.15
+	SellTriggerValue = 0.1
 )
 
 type AssetBalancer struct {
@@ -35,7 +36,7 @@ func (wrapper *UsdAssetWrapper) Ratio(total float64) float64 {
 }
 
 func newBaseUsdAssetWrapper(
-	account *client.Account,
+	account *binance.Account,
 	assetBalancer AssetBalancer,
 ) (*UsdAssetWrapper, error) {
 	price, err := asset.GetPrice(assetBalancer.BasePairSymbol())
@@ -48,7 +49,7 @@ func newBaseUsdAssetWrapper(
 }
 
 func newUsdAssetWrapper(
-	account *client.Account,
+	account *binance.Account,
 	assetBalancer AssetBalancer,
 	price float64,
 ) (*UsdAssetWrapper, error) {
@@ -66,7 +67,7 @@ func newUsdAssetWrapper(
 	}, nil
 }
 
-func BalanceBetweenTwoAssets(account *client.Account, baseAsset AssetBalancer, subAsset AssetBalancer) error {
+func BalanceBetweenTwoAssets(account *binance.Account, baseAsset AssetBalancer, subAsset AssetBalancer) error {
 	if err := asset.CanTrade(account, []string{baseAsset.Symbol, subAsset.Symbol}); err != nil {
 		return err
 	}
@@ -90,7 +91,7 @@ func BalanceBetweenTwoAssets(account *client.Account, baseAsset AssetBalancer, s
 		Log("BUY", baseAssetWrapper, subAssetWrapper, amountToBuy)
 		err = Buy(amountToBuy, pairSymbol)
 	} else {
-		log.Info("The Balancer will not BUY anything")
+		log.Warning("The Balancer will not BUY anything")
 	}
 
 	if err == nil && ShouldSell(baseAssetWrapper, subAssetWrapper) {
@@ -101,7 +102,7 @@ func BalanceBetweenTwoAssets(account *client.Account, baseAsset AssetBalancer, s
 			pairSymbol,
 		)
 	} else {
-		log.Info("The Balancer will not SELL anything")
+		log.Warning("The Balancer will not SELL anything")
 	}
 
 	return err
@@ -144,11 +145,11 @@ func GetPairSymbol(baseAsset AssetBalancer, subAsset AssetBalancer) string {
 }
 
 func Buy(amount float64, pairSymbol string) error {
-	_, err := client.NewBinanceClient().
+	_, err := binance.NewBinanceClient().
 		NewCreateOrderGateway().
 		Symbol(pairSymbol).
-		Type(client.OrderTypeMarket).
-		Side(client.SideTypeBuy).
+		Type(binance.OrderTypeMarket).
+		Side(binance.SideTypeBuy).
 		QuoteOrderQty(amount).
 		Validate().
 		Do(context.Background())
@@ -157,11 +158,11 @@ func Buy(amount float64, pairSymbol string) error {
 }
 
 func Sell(amount float64, pairSymbol string) error {
-	_, err := client.NewBinanceClient().
+	_, err := binance.NewBinanceClient().
 		NewCreateOrderGateway().
 		Symbol(pairSymbol).
-		Type(client.OrderTypeMarket).
-		Side(client.SideTypeSell).
+		Type(binance.OrderTypeMarket).
+		Side(binance.SideTypeSell).
 		QuoteOrderQty(amount).
 		Do(context.Background())
 
@@ -192,10 +193,13 @@ func AmountToSell(wrapper *UsdAssetWrapper, subWrapper *UsdAssetWrapper) float64
 
 func ShouldBuy(baseWrapper *UsdAssetWrapper, subWrapper *UsdAssetWrapper) bool {
 	totalUsdPrice := baseWrapper.totalUsdPrice + subWrapper.totalUsdPrice
-	return baseWrapper.Ratio(totalUsdPrice) < baseWrapper.asset.Weight
+	baseRation := baseWrapper.Ratio(totalUsdPrice)
+	diff := math.Abs(baseRation - baseWrapper.asset.Weight)
+	return baseRation < baseWrapper.asset.Weight && diff >= BuyTriggerValue
 }
 
 func ShouldSell(baseWrapper *UsdAssetWrapper, subWrapper *UsdAssetWrapper) bool {
 	totalUsdPrice := baseWrapper.totalUsdPrice + subWrapper.totalUsdPrice
-	return subWrapper.Ratio(totalUsdPrice) < subWrapper.asset.Weight
+	diff := subWrapper.Ratio(totalUsdPrice) - subWrapper.asset.Weight
+	return subWrapper.Ratio(totalUsdPrice) < subWrapper.asset.Weight && diff >= SellTriggerValue
 }

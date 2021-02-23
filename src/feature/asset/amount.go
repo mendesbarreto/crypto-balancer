@@ -1,11 +1,11 @@
 package asset
 
 import (
-	"crypto-balancer/src/feature/binance/api/client"
+	"crypto-balancer/src/feature/binance"
 	"strconv"
 )
 
-func GetAmount(balances []client.AccountBalance, asset string) (float64, error) {
+func GetAmount(balances []binance.AccountBalance, asset string) (float64, error) {
 	balance, err := GetBalance(balances, asset)
 
 	if err != nil {

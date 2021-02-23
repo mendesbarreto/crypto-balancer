@@ -1,4 +1,4 @@
-package client
+package binance
 
 import (
 	"context"
@@ -82,7 +82,7 @@ type Fill struct {
 
 // CreateOrderService create order
 type CreateOrderGateway struct {
-	client           *BinanceClient
+	client           *Client
 	symbol           string
 	side             SideType
 	positionSide     *PositionSideType

@@ -62,7 +62,7 @@ func TestShouldBuy(test *testing.T) {
 			},
 			result:   false,
 			buy:      0,
-			sell:     -4.999999999999996,
+			sell:     4.999999999999996,
 			hasError: false,
 		},
 		TestDataItem{
@@ -88,7 +88,7 @@ func TestShouldBuy(test *testing.T) {
 			},
 			result:   false,
 			buy:      0,
-			sell:     -15.000000000000004,
+			sell:     15.000000000000004,
 			hasError: false,
 		},
 		TestDataItem{
@@ -98,9 +98,9 @@ func TestShouldBuy(test *testing.T) {
 						Symbol: "DOT",
 						Weight: 0.5,
 					},
-					assetAmount:     40,
+					assetAmount:     20,
 					usdPricePerUnit: 1,
-					totalUsdPrice:   40,
+					totalUsdPrice:   20,
 				},
 				&UsdAssetWrapper{
 					asset: AssetBalancer{
@@ -113,7 +113,7 @@ func TestShouldBuy(test *testing.T) {
 				},
 			},
 			result:   true,
-			buy:      5.000000000000002,
+			buy:      15.000000000000002,
 			sell:     0,
 			hasError: false,
 		},
@@ -146,19 +146,21 @@ func TestShouldBuy(test *testing.T) {
 	}
 
 	for index, item := range dataList {
-		result := ShouldBuy(item.inputs[0], item.inputs[1])
+		baseAsset := item.inputs[0]
+		subAsset := item.inputs[1]
+		result := ShouldBuy(baseAsset, subAsset)
 
 		if result != item.result {
 			test.Errorf("[Index: %v] ShouldBuy with args %v : Failed, expected false but got %v", index, item.inputs, item.result)
 		}
 
-		buy := AmountToBuy(item.inputs[0], item.inputs[1])
+		buy := AmountToBuy(baseAsset, subAsset)
 
 		if buy != item.buy {
 			test.Errorf("[Index: %v] AmountToBuy with args %v : Failed, expected %v but got %v", index, item.inputs, item.buy, buy)
 		}
 
-		sell := AmountToSell(item.inputs[0], item.inputs[1])
+		sell := AmountToSell(baseAsset, subAsset)
 
 		if sell != item.sell {
 			test.Errorf("[Index: %v] AmountToSell with args %v : Failed, expected %v but got %v", index, item.inputs, item.sell, sell)

@@ -1,4 +1,4 @@
-package client
+package binance
 
 import (
 	"bytes"
@@ -30,7 +30,7 @@ const (
 	WorkingTypeContractPrice WorkingType = "CONTRACT_PRICE"
 )
 
-type BinanceClient struct {
+type Client struct {
 	ApiKey      string
 	SecretKey   string
 	BaseURL     string
@@ -39,8 +39,8 @@ type BinanceClient struct {
 	TimesOffset int64
 }
 
-func NewBinanceClientWithHttp(client *http.Client) *BinanceClient {
-	return &BinanceClient{
+func NewBinanceClientWithHttp(client *http.Client) *Client {
+	return &Client{
 		ApiKey:     environment.BinanceApiKey(),
 		SecretKey:  environment.BinanceAPiSecretKey(),
 		BaseURL:    environment.BinanceApiBaseUrl(),
@@ -49,8 +49,8 @@ func NewBinanceClientWithHttp(client *http.Client) *BinanceClient {
 	}
 }
 
-func NewBinanceClient() *BinanceClient {
-	return &BinanceClient{
+func NewBinanceClient() *Client {
+	return &Client{
 		ApiKey:     environment.BinanceApiKey(),
 		SecretKey:  environment.BinanceAPiSecretKey(),
 		BaseURL:    environment.BinanceApiBaseUrl(),
@@ -67,7 +67,7 @@ const (
 	SectionSigned
 )
 
-func (client *BinanceClient) NewHeader(sectionType SectionApiKeyType) http.Header {
+func (client *Client) NewHeader(sectionType SectionApiKeyType) http.Header {
 	header := http.Header{}
 
 	header.Set("Content-Type", "application/json")
@@ -79,11 +79,11 @@ func (client *BinanceClient) NewHeader(sectionType SectionApiKeyType) http.Heade
 	return header
 }
 
-func (client *BinanceClient) createURL(endpoint string) string {
+func (client *Client) createURL(endpoint string) string {
 	return fmt.Sprintf("%s%s", client.BaseURL, endpoint)
 }
 
-func (client *BinanceClient) NewRequest(method string, endpoint string, sectionType SectionApiKeyType) *network.Request {
+func (client *Client) NewRequest(method string, endpoint string, sectionType SectionApiKeyType) *network.Request {
 	request := &network.Request{
 		Method:            method,
 		Header:            client.NewHeader(sectionType),
@@ -99,7 +99,7 @@ func (client *BinanceClient) NewRequest(method string, endpoint string, sectionT
 	return request
 }
 
-func (client *BinanceClient) Call(ctx context.Context, request *network.Request) (data []byte, err error) {
+func (client *Client) Call(ctx context.Context, request *network.Request) (data []byte, err error) {
 	httpRequest, err := request.ToHttpRequest(ctx)
 
 	if err != nil {
@@ -179,19 +179,19 @@ func AddRequiredParams(secretKey string, sectionType SectionApiKeyType, now func
 	}
 }
 
-func (client *BinanceClient) NewGetAccountGateway() *GetAccountGateway {
+func (client *Client) NewGetAccountGateway() *GetAccountGateway {
 	return &GetAccountGateway{
 		client: client,
 	}
 }
 
-func (client *BinanceClient) NewCreateOrderGateway() *CreateOrderGateway {
+func (client *Client) NewCreateOrderGateway() *CreateOrderGateway {
 	return &CreateOrderGateway{
 		client: client,
 	}
 }
 
-func (client *BinanceClient) NewMarketAverageGateway() *MarketTickerGateway {
+func (client *Client) NewMarketAverageGateway() *MarketTickerGateway {
 	return &MarketTickerGateway{
 		client: client,
 	}

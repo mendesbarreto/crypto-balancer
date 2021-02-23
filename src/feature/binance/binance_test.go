@@ -1,4 +1,4 @@
-package client
+package binance
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func setupBinance() (binanceClient *BinanceClient) {
+func setupBinance() (binanceClient *Client) {
 	environment.LoadVariables()
 	return NewBinanceClient()
 }
@@ -22,7 +22,7 @@ func setupBinance() (binanceClient *BinanceClient) {
 func setupRequest(
 	requestMethod string,
 	requestEndpoint string,
-	sectionType SectionApiKeyType) (*BinanceClient, *network.Request) {
+	sectionType SectionApiKeyType) (*Client, *network.Request) {
 
 	binanceClient := setupBinance()
 	request := binanceClient.NewRequest(requestMethod, requestEndpoint, sectionType)

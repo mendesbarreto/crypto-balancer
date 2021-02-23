@@ -2,7 +2,7 @@ package asset
 
 import (
 	"context"
-	"crypto-balancer/src/feature/binance/api/client"
+	"crypto-balancer/src/feature/binance"
 	"strconv"
 )
 
@@ -11,7 +11,7 @@ func GetPrice(assetSymbol string) (float64, error) {
 		return 1, nil
 	}
 
-	gateway := client.NewBinanceClient().NewMarketAverageGateway()
+	gateway := binance.NewBinanceClient().NewMarketAverageGateway()
 	market, err := gateway.Symbol(assetSymbol).Do(context.Background())
 
 	if err != nil {

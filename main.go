@@ -4,7 +4,8 @@ import (
 	"context"
 	"crypto-balancer/src/core/environment" //nolint:gci
 	"crypto-balancer/src/feature/balancer"
-	"crypto-balancer/src/feature/binance/api/client"
+	"crypto-balancer/src/feature/binance"
+	"crypto-balancer/src/feature/coindiscover"
 	log "github.com/sirupsen/logrus"
 	"os"
 	//nolint:gci
@@ -14,7 +15,7 @@ func main() {
 	environment.LoadVariables()
 	SetupLogger()
 
-	binanceClient := client.NewBinanceClient()
+	binanceClient := binance.NewBinanceClient()
 	account, err := binanceClient.NewGetAccountGateway().Do(context.Background())
 
 	if err != nil {
@@ -22,7 +23,11 @@ func main() {
 		os.Exit(-1)
 	}
 
-	err = balancer.BalanceBetweenTwoAssets(account, New1InchBalancer(), NewUsdtBalancer())
+	log.Info(account)
+
+	//err = balancer.BalanceBetweenTwoAssets(account, New1InchBalancer(), NewUsdtBalancer())
+	coindiscover.DiscoverGems(1.2)
+	//err = balancer.BalanceBetweenTwoAssets(account, New1InchBalancer(), NewUsdtBalancer())
 
 	if err != nil {
 		log.Error(err)

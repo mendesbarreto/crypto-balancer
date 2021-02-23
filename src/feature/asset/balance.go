@@ -2,12 +2,12 @@ package asset
 
 import (
 	"crypto-balancer/src/core/network"
-	"crypto-balancer/src/feature/binance/api/client"
+	"crypto-balancer/src/feature/binance"
 	"fmt"
 )
 
-func Filter(balances []client.AccountBalance, lambda func(client.AccountBalance) bool) []client.AccountBalance {
-	list := make([]client.AccountBalance, 0)
+func Filter(balances []binance.AccountBalance, lambda func(binance.AccountBalance) bool) []binance.AccountBalance {
+	list := make([]binance.AccountBalance, 0)
 	for _, balance := range balances {
 		if lambda(balance) {
 			list = append(list, balance)
@@ -17,9 +17,9 @@ func Filter(balances []client.AccountBalance, lambda func(client.AccountBalance)
 	return list
 }
 
-func GetBalance(balances []client.AccountBalance, asset string) (balance *client.AccountBalance, err *network.APIError) {
+func GetBalance(balances []binance.AccountBalance, asset string) (balance *binance.AccountBalance, err *network.APIError) {
 
-	result := Filter(balances, func(balance client.AccountBalance) bool {
+	result := Filter(balances, func(balance binance.AccountBalance) bool {
 		return balance.Asset == asset
 	})
 

@@ -1,4 +1,4 @@
-package client
+package binance
 
 import (
 	"context"
@@ -44,7 +44,7 @@ const (
 )
 
 type MarketTickerGateway struct {
-	client *BinanceClient
+	client *Client
 	symbol string
 }
 
